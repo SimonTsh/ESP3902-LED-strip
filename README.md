@@ -7,6 +7,6 @@ __Following packages are required to run:__
 * rpi_ws281x
 * music21
 
-_Instructions:_
-To clone it into local machine,
-`git clone https://github.com/SimonTsh/ESP3902-LED-strip.git`
+__Instructions:__
+1. `git clone https://github.com/SimonTsh/ESP3902-LED-strip.git`
+2. `sudo python3 xxx.py`
