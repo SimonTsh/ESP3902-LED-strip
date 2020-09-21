@@ -111,7 +111,7 @@
         <staff>1</staff>
         <sound tempo="100"/>
         </direction>
-      <note>
+      <note> #start of first bar
         <rest/>
         <duration>16</duration>
         <voice>1</voice>
@@ -121,7 +121,7 @@
         <duration>16</duration>
         </backup>
       <note default-x="98.00" default-y="-125.00">
-        <pitch>
+        <pitch> #LH note 1
           <step>D</step>
           <octave>3</octave>
           </pitch>
@@ -133,7 +133,7 @@
         <beam number="1">begin</beam>
         </note>
       <note default-x="124.43" default-y="-105.00">
-        <pitch>
+        <pitch> #LH note 2
           <step>A</step>
           <octave>3</octave>
           </pitch>
@@ -145,7 +145,7 @@
         <beam number="1">continue</beam>
         </note>
       <note default-x="150.86" default-y="-90.00">
-        <pitch>
+        <pitch> #LH note 3
           <step>D</step>
           <octave>4</octave>
           </pitch>
@@ -155,9 +155,9 @@
         <stem>down</stem>
         <staff>2</staff>
         <beam number="1">continue</beam>
-        </note>
+        </note> 
       <note default-x="177.29" default-y="-80.00">
-        <pitch>
+        <pitch> #LH note 4
           <step>F</step>
           <alter>1</alter>
           <octave>4</octave>
@@ -170,7 +170,7 @@
         <beam number="1">end</beam>
         </note>
       <note default-x="203.72" default-y="-140.00">
-        <pitch>
+        <pitch> #LH note 5
           <step>A</step>
           <octave>2</octave>
           </pitch>
@@ -182,7 +182,7 @@
         <beam number="1">begin</beam>
         </note>
       <note default-x="230.15" default-y="-120.00">
-        <pitch>
+        <pitch> #LH note 6
           <step>E</step>
           <octave>3</octave>
           </pitch>
@@ -194,7 +194,7 @@
         <beam number="1">continue</beam>
         </note>
       <note default-x="256.59" default-y="-105.00">
-        <pitch>
+        <pitch> #LH note 7
           <step>A</step>
           <octave>3</octave>
           </pitch>
@@ -206,7 +206,7 @@
         <beam number="1">continue</beam>
         </note>
       <note default-x="283.02" default-y="-95.00">
-        <pitch>
+        <pitch> #LH note 8
           <step>C</step>
           <alter>1</alter>
           <octave>4</octave>
@@ -217,7 +217,7 @@
         <stem>down</stem>
         <staff>2</staff>
         <beam number="1">end</beam>
-        </note>
+        </note> #End of first bar
       </measure>
     <measure number="2" width="227.16">
       <note>
