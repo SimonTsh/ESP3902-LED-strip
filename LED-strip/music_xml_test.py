@@ -20,8 +20,9 @@ LED_DMA        = 10      # DMA channel to use for generating signal (try 10)
 LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
-SHIFTING_FACTOR = 13      # Scaling factor to shift the notes within the LED strip length
-SPEED_FACTOR = 1         # To adjust the speed of the music according to the score
+OCTAVE = 12
+SHIFTING_FACTOR = 2*OCTAVE      # Scaling factor to shift the notes within the LED strip length
+SPEED_FACTOR = 1         # To adjust the speed of the music according to the score e.g. 0.5 for slow song
 
 def colorWipe(strip, color, wait_ms=50):
     """Wipe color across display a pixel at a time."""
@@ -60,7 +61,8 @@ def xml_to_list(xml_data):
 
 sys.path.append('..')
 
-fn = os.path.join('/home/pi/Documents/LED-strip', 'twinkle_twinkle_little_star.musicxml') # change directory according to musicXML file location
+# fn = os.path.join('/home/pi/Documents/LED-strip', 'silent_night_both.musicxml') # change directory according to musicXML file location
+fn = os.path.join('/home/pi/Documents/LED-strip', 'twinkle_twinkle_little_star_1.musicxml')
 fn_out = os.path.join('/home/pi/Documents/LED-strip', 'LED_output.csv')
 
 with open(fn, 'r') as stream:
@@ -68,7 +70,7 @@ with open(fn, 'r') as stream:
 
 start = xml_str.find('<note')
 end = xml_str[start:].find('</note>') + start + len('</note>')
-# print(xml_str[start:end])
+# print(xml_str)
 
 xml_data = m21.converter.parse(fn)
 
@@ -124,6 +126,8 @@ if __name__ == '__main__':
                 if i != (len(note_pitch)-1):
                     if (start_time[i] + end_time[i] < start_time[i+1]):
                         print(note_pitch[i])
+                        strip.setPixelColor(int(note_pitch[i]), 0)
+                        strip.show()
                         time.sleep(((start_time[i+1] - start_time[i]) - end_time[i+1])/1000.0 * 500)
 
     except KeyboardInterrupt:
