@@ -10,4 +10,4 @@ __Following packages are required to run:__
 
 __Instructions:__
 1. `git clone https://github.com/SimonTsh/ESP3902-LED-strip.git`
-2. `sudo python3 xxx.py`
+2. `sudo python3 LED-strip/xxx.py`
