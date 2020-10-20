@@ -23,16 +23,18 @@ LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 OCTAVE = 12
 SHIFTING_FACTOR = 2*OCTAVE      # Scaling factor to shift the notes within the LED strip length
 SPEED_FACTOR = 1         # To adjust the speed of the music according to the score e.g. 0.5 for slow song
+BEAT = 0.5 # running the loop in intervals of 1s
 
 def colorWipe(strip, color, wait_ms=50):
     """Wipe color across display a pixel at a time."""
     for i in range(strip.numPixels()):
         strip.setPixelColor(i, color)
         strip.show()
-        time.sleep(wait_ms/1000.0) 
+        time.sleep(wait_ms/1000.0)
         
 def xml_to_list(xml_data):
-    xml_list = []
+    xml_list, xml_list_left, xml_list_right = [], [], []
+    right = 1
 
     for part in xml_data.parts:
         instrument = part.getInstrument().instrumentName
@@ -55,14 +57,50 @@ def xml_to_list(xml_data):
                 volume = note.volume.realized
                 xml_list.append([start, duration, pitch, volume, instrument])
                 
-    xml_list = sorted(xml_list, key=lambda x: (x[0], x[2]))
+    # xml_list = sorted(xml_list, key=lambda x: (x[0], x[2]))
+    for xml in xml_list:
+        if xml[0] == 0 and xml != xml_list[0]:
+            right = 0
+            
+        if right == 1:
+            xml_list_right.append(xml)
+        else:
+            xml_list_left.append(xml)
+    
+    return xml_list_right, xml_list_left
 
-    return xml_list
+def params(df):    
+    start_time = np.array((df['Start'] / SPEED_FACTOR).astype(int))
+    end_time = np.array((df['End'] / SPEED_FACTOR).astype(int))
+    note_pitch = np.array((df['Pitch'] - SHIFTING_FACTOR).astype(int)) # shift LED output by 1 octave down
+   
+    return start_time, end_time, note_pitch
 
+def check_for_repeated_note(note_pitch, end_time, i):
+    # check for repeated notes
+    if ((note_pitch[i] == note_pitch[i-1]) and i != 0):
+        strip.setPixelColor(int(note_pitch[i]), Color(0,255,255)) # change color for repeated notes
+        strip.show()
+
+def check_for_rest_note(note_pitch, start_time, end_time, i):
+    # check if need to wait for rest
+    if i != (len(note_pitch)-1):
+        if (start_time[i] + end_time[i] < start_time[i+1]):
+            print(note_pitch[i])
+            strip.setPixelColor(int(note_pitch[i]), 0)
+            strip.show()
+            time.sleep(((start_time[i+1] - start_time[i]) - end_time[i+1])/1000.0 * 500) # cannot use time.sleep locally
+
+def fill_array_with_zero(start_time, duration):
+    array = np.zeros(duration, dtype=int)
+    array[start_time] = start_time
+    print(array)
+    return array
+    
 sys.path.append('..')
 
-# fn = os.path.join('/home/pi/Documents/LED-strip', 'silent_night_both.musicxml') # change directory according to musicXML file location
-fn = os.path.join('/home/pi/Documents/LED-strip', 'twinkle_twinkle_little_star_1.musicxml')
+fn = os.path.join('/home/pi/Documents/LED-strip', 'silent_night_both.musicxml') # change directory according to musicXML file location
+# fn = os.path.join('/home/pi/Documents/LED-strip', 'twinkle_twinkle_little_star_2.musicxml')
 fn_out = os.path.join('/home/pi/Documents/LED-strip', 'LED_output.csv')
 
 with open(fn, 'r') as stream:
@@ -74,17 +112,20 @@ end = xml_str[start:].find('</note>') + start + len('</note>')
 
 xml_data = m21.converter.parse(fn)
 
-xml_list = xml_to_list(xml_data)
+xml_list_right, xml_list_left = xml_to_list(xml_data)
 
-df = pd.DataFrame(xml_list, columns=['Start', 'End', 'Pitch', 'Velocity', 'Instrument'])
+df_right = pd.DataFrame(xml_list_right, columns=['Start', 'End', 'Pitch', 'Velocity', 'Instrument'])
+df_left = pd.DataFrame(xml_list_left, columns=['Start', 'End', 'Pitch', 'Velocity', 'Instrument'])
 
-df.to_csv(fn_out, sep=';', quoting=2, float_format='%.3f')
+# df.to_csv(fn_out, sep=';', quoting=2, float_format='%.3f')
+start_time_right, end_time_right, note_pitch_right = params(df_right)
+print(start_time_right, end_time_right, note_pitch_right)
+start_time_left, end_time_left, note_pitch_left = params(df_left)
+print(start_time_left, end_time_left, note_pitch_left)
 
-start_time = np.array((df['Start'] / SPEED_FACTOR).astype(int))
-end_time = np.array((df['End'] / SPEED_FACTOR).astype(int))
-note_pitch = np.array((df['Pitch'] - SHIFTING_FACTOR).astype(int)) # shift LED output by 1 octave down
-
-print(start_time, end_time, note_pitch)
+duration = start_time_right[-1] + end_time_right[-1] # both right and left should be the same
+right_array = fill_array_with_zero(start_time_right, duration)
+left_array = fill_array_with_zero(start_time_left, duration)
 
 # Main program logic for LED:
 if __name__ == '__main__':
@@ -104,31 +145,41 @@ if __name__ == '__main__':
  
     try:
         while True:
-            for i in range(len(note_pitch)):
-                strip.setPixelColor(int(note_pitch[i]), Color(0,0,255))
-                strip.show()
-                
-                # check for repeated notes
-                if (note_pitch[i] == note_pitch[i-1]):
-                    print(note_pitch[i])
-                    strip.setPixelColor(int(note_pitch[i]), 0)
+            i = 0
+            index_right, index_left = 0, 0
+            duration_right, duration_left = 0, 0
+            
+            while i < duration:
+                if(right_array[i] == i):
+                    print(duration_right, i)
+                    if(duration_right == i):
+                        strip.setPixelColor(int(note_pitch_right[index_right-1]), 0) # remove LED of previous note
+                        
+                    strip.setPixelColor(int(note_pitch_right[index_right]), Color(0,0,255))
                     strip.show()
-                    time.sleep(end_time[i]/1000.0 * 100)
-                    strip.setPixelColor(int(note_pitch[i]), Color(0,255,255))
+                    
+                    check_for_repeated_note(note_pitch_right, end_time_right, index_right)
+                    check_for_rest_note(note_pitch_right, start_time_right, end_time_right, index_right) # needs refinement
+                    
+                    duration_right += end_time_right[index_right]
+                    index_right += 1
+                    
+                if(left_array[i] == i):
+                    print(duration_left, i)
+                    if(duration_left == i):
+                        strip.setPixelColor(int(note_pitch_left[index_left-1]), 0)
+                        
+                    strip.setPixelColor(int(note_pitch_left[index_left]), Color(0,0,255))
                     strip.show()
-                    time.sleep(end_time[i]/1000.0 * 400)
-                else:
-                    print(note_pitch[i])
-                    time.sleep(end_time[i]/1000.0 * 500)
-                strip.setPixelColor(int(note_pitch[i]), 0)
-                
-                # check if need to wait for rest
-                if i != (len(note_pitch)-1):
-                    if (start_time[i] + end_time[i] < start_time[i+1]):
-                        print(note_pitch[i])
-                        strip.setPixelColor(int(note_pitch[i]), 0)
-                        strip.show()
-                        time.sleep(((start_time[i+1] - start_time[i]) - end_time[i+1])/1000.0 * 500)
+                    
+                    check_for_repeated_note(note_pitch_left, end_time_left, index_left)
+                    # check_for_rest_note(note_pitch_left, start_time_left, end_time_left, index_left)
+                    
+                    duration_left += end_time_left[index_left]
+                    index_left += 1
+                    
+                time.sleep(BEAT)
+                i += 1
 
     except KeyboardInterrupt:
         if args.clear:
