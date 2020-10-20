@@ -53,64 +53,44 @@ mic_sens_corr = np.power(10.0,mic_sens_dBV/20.0) # calculate mic sensitivity con
 stream = audio.open(format = form_1,rate = FSAMP,channels = chans, \
                     input_device_index = dev_index,input = True, \
                     frames_per_buffer=FRAME_SIZE)
-    try:
-        # loop through stream and look for dominant peaks while also subtracting noise
-        while True:
-            # read stream and convert data from bits to Pascals
-            stream.start_stream()
-            X= np.fromstring(stream.read(FRAME_SIZE),dtype=np.int16)
-            if ii==noise_len:
-                X= X-noise_amp
-            X = ((X/np.power(2.0,15))*5.25)*(mic_sens_corr)
-            stream.stop_stream()
-
 
 def fft(x):
-		X = list()
-		for k in xrange(0, N):
-			window = 1 # np.sin(np.pi * (k+0.5)/N)**2
-			X.append(np.complex(x[k] * window, 0))
-	
+    X = list()
+    for k in xrange(0, N):
+        window = 1 # np.sin(np.pi * (k+0.5)/N)**2
+        X.append(np.complex(x[k] * window, 0))
+    
+    fft_rec(X)
+    return X
 
-		fft_rec(X)
-		return X
-	
+def fft_rec(X):
+    N = len(X)
+    
+    if N <= 1:
+        return
 
-	def fft_rec(X):
-		N = len(X)
-	
+    even = np.array(X[0:N:2])
+    odd = np.array(X[1:N:2])
 
-		if N <= 1:
-			return
-	
+    fft_rec(even)
+    fft_rec(odd)
+    
+    for k in xrange(0, N/2):
+        t = np.exp(np.complex(0, -2 * np.pi * k / N)) * odd[k]
+        X[k] = even[k] + t
+        X[N/2 + k] = even[k] - t
+    
+x_values = np.arange(0, N, 1)
 
-		even = np.array(X[0:N:2])
-		odd = np.array(X[1:N:2])
-	
+x = np.sin((2*np.pi*x_values / 32.0)) # 32 - 256Hz
+x += np.sin((2*np.pi*x_values / 64.0)) # 64 - 128Hz
 
-		fft_rec(even)
-		fft_rec(odd)
-	
-
-		for k in xrange(0, N/2):
-			t = np.exp(np.complex(0, -2 * np.pi * k / N)) * odd[k]
-			X[k] = even[k] + t
-			X[N/2 + k] = even[k] - t
-	
-	x_values = np.arange(0, N, 1)
-	
-
-	x = np.sin((2*np.pi*x_values / 32.0)) # 32 - 256Hz
-	x += np.sin((2*np.pi*x_values / 64.0)) # 64 - 128Hz
-	
-
-	X = fft(x)
+X = fft(x)
 
 powers_all = np.abs(np.divide(X, N/2))
-	powers = powers_all[0:N/2]
-	frequencies = np.divide(np.multiply(SAMPLE_RATE, np.arange(0, N/2)), N)
+powers = powers_all[0:N/2]
+frequencies = np.divide(np.multiply(SAMPLE_RATE, np.arange(0, N/2)), N)
 
-	
 Freq_number = max(X)
 # compute FFT parameters
 f_vec = FSAMP*np.arange(FRAME_SIZE/2)/FRAME_SIZE # frequency vector based on window size and sample rate
@@ -142,7 +122,17 @@ if __name__ == '__main__':
     if not args.clear:
         print('Use "-c" argument to clear LEDs on exit')
  
-        
+    try:
+        # loop through stream and look for dominant peaks while also subtracting noise
+        while True:
+            # read stream and convert data from bits to Pascals
+            stream.start_stream()
+            X= np.fromstring(stream.read(FRAME_SIZE),dtype=np.int16)
+            if ii==noise_len:
+                X= X-noise_amp
+            X = ((X/np.power(2.0,15))*5.25)*(mic_sens_corr)
+            stream.stop_stream()
+            
             # compute FFT
             fft_data = (np.abs(np.fft.fft(data))[0:int(np.floor(FRAME_SIZE/2))])/FRAME_SIZE
             fft_data[1:] = 2*fft_data[1:]
@@ -175,8 +165,6 @@ if __name__ == '__main__':
                 strip.setPixelColor(n_prev, Color(0,0,0))
                 strip.show()
                 n_prev = n
-            
-            time.sleep(0.001)
             
     except KeyboardInterrupt:
         if args.clear:
