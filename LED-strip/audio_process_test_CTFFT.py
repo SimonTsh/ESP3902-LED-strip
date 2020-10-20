@@ -56,7 +56,7 @@ stream = audio.open(format = form_1,rate = FSAMP,channels = chans, \
 
 def fft(x):
     X = list()
-    for k in xrange(0, N):
+    for k in list(range(0, N)):
         window = 1 # np.sin(np.pi * (k+0.5)/N)**2
         X.append(np.complex(x[k] * window, 0))
     
@@ -75,10 +75,10 @@ def fft_rec(X):
     fft_rec(even)
     fft_rec(odd)
     
-    for k in xrange(0, N/2):
+    for k in list(range(0, int(N/2))):
         t = np.exp(np.complex(0, -2 * np.pi * k / N)) * odd[k]
         X[k] = even[k] + t
-        X[N/2 + k] = even[k] - t
+        X[int(N/2) + k] = even[k] - t
     
 x_values = np.arange(0, N, 1)
 
@@ -87,16 +87,22 @@ x += np.sin((2*np.pi*x_values / 64.0)) # 64 - 128Hz
 
 X = fft(x)
 
+_, plots = plt.subplots(2)
+
+plots[0].plot(x)
+
 powers_all = np.abs(np.divide(X, N/2))
-powers = powers_all[0:N/2]
-frequencies = np.divide(np.multiply(SAMPLE_RATE, np.arange(0, N/2)), N)
+powers = powers_all[0:int(N/2)]
+frequencies = np.divide(np.multiply(FSAMP, np.arange(0, N/2)), N)
+plots[1].plot(frequencies, powers)
+
+plt.show()
 
 Freq_number = max(X)
 # compute FFT parameters
 f_vec = FSAMP*np.arange(FRAME_SIZE/2)/FRAME_SIZE # frequency vector based on window size and sample rate
 mic_low_freq = 70 # low frequency response of the mic (mine in this case is 100 Hz)
 low_freq_loc = np.argmin(np.abs(f_vec-mic_low_freq))
-
 
 # some peak-finding and noise preallocations
 peak_shift = 5
@@ -127,16 +133,28 @@ if __name__ == '__main__':
         while True:
             # read stream and convert data from bits to Pascals
             stream.start_stream()
-            X= np.fromstring(stream.read(FRAME_SIZE),dtype=np.int16)
+            data = np.fromstring(stream.read(FRAME_SIZE),dtype=np.int16)
             if ii==noise_len:
-                X= X-noise_amp
-            X = ((X/np.power(2.0,15))*5.25)*(mic_sens_corr)
+                data = data-noise_amp
+            data = ((data/np.power(2.0,15))*5.25)*(mic_sens_corr)
             stream.stop_stream()
             
             # compute FFT
             fft_data = (np.abs(np.fft.fft(data))[0:int(np.floor(FRAME_SIZE/2))])/FRAME_SIZE
             fft_data[1:] = 2*fft_data[1:]
-        
+            print(fft_data)
+            # fft_data = fft(data)
+            
+            # _, plots = plt.subplots(2)
+
+            # plots[0].plot(x)
+            
+            # powers_all = np.abs(np.divide(fft_data, N/2))
+            # powers = powers_all[0:int(N/2)]
+            # frequencies = np.divide(np.multiply(FSAMP, np.arange(0, N/2)), N)
+            # plots[1].plot(frequencies, powers)
+            
+            # plt.show()
             # calculate and subtract average spectral noise
             if ii<noise_len:
                 if ii==0:
@@ -169,3 +187,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         if args.clear:
             colorWipe(strip, Color(0,0,0), 10)
+
