@@ -87,9 +87,13 @@ def check_for_rest_note(note_pitch, start_time, end_time, i):
     if i != (len(note_pitch)-1):
         if (start_time[i] + end_time[i] < start_time[i+1]):
             print(note_pitch[i])
+            time.sleep(((start_time[i+1] - start_time[i]) - end_time[i+1])/1000.0 * 500) # temporary measure
             strip.setPixelColor(int(note_pitch[i]), 0)
             strip.show()
-            time.sleep(((start_time[i+1] - start_time[i]) - end_time[i+1])/1000.0 * 500) # cannot use time.sleep locally
+            end_time[i] = start_time[i+1] - start_time[i]
+            return end_time
+            
+    return end_time
 
 def fill_array_with_zero(start_time, duration):
     array = np.zeros(duration, dtype=int)
@@ -99,8 +103,8 @@ def fill_array_with_zero(start_time, duration):
     
 sys.path.append('..')
 
-fn = os.path.join('/home/pi/Documents/LED-strip', 'silent_night_both.musicxml') # change directory according to musicXML file location
-# fn = os.path.join('/home/pi/Documents/LED-strip', 'twinkle_twinkle_little_star_2.musicxml')
+# fn = os.path.join('/home/pi/Documents/LED-strip', 'silent_night_both.musicxml') # change directory according to musicXML file location
+fn = os.path.join('/home/pi/Documents/LED-strip', 'twinkle_twinkle_little_star_2.musicxml')
 fn_out = os.path.join('/home/pi/Documents/LED-strip', 'LED_output.csv')
 
 with open(fn, 'r') as stream:
@@ -159,13 +163,15 @@ if __name__ == '__main__':
                     strip.show()
                     
                     check_for_repeated_note(note_pitch_right, end_time_right, index_right)
-                    check_for_rest_note(note_pitch_right, start_time_right, end_time_right, index_right) # needs refinement
+                    end_time_right = check_for_rest_note(note_pitch_right, start_time_right, end_time_right, index_right) # needs refinement
                     
                     duration_right += end_time_right[index_right]
+                    
+                    # print(index_right)
                     index_right += 1
                     
                 if(left_array[i] == i):
-                    print(duration_left, i)
+                    # print(duration_left, i)
                     if(duration_left == i):
                         strip.setPixelColor(int(note_pitch_left[index_left-1]), 0)
                         
@@ -173,7 +179,7 @@ if __name__ == '__main__':
                     strip.show()
                     
                     check_for_repeated_note(note_pitch_left, end_time_left, index_left)
-                    # check_for_rest_note(note_pitch_left, start_time_left, end_time_left, index_left)
+                    end_time_left = check_for_rest_note(note_pitch_left, start_time_left, end_time_left, index_left) # needs refinement
                     
                     duration_left += end_time_left[index_left]
                     index_left += 1
