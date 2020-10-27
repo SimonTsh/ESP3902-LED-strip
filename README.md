@@ -6,6 +6,7 @@ __Following packages are required to run:__
 * Python3 libraries like numpy, matplotlib and pandas
 * rpi_ws281x
 * music21
+* pyaudio (if you want to use analogue piano with microphone)
 * pygame.midi (if you want to connect to keyboard with MIDI output)
 
 __Instructions:__
