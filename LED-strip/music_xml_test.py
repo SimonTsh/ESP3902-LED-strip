@@ -98,13 +98,16 @@ def check_for_rest_note(note_pitch, start_time, end_time, i):
 def fill_array_with_zero(start_time, duration):
     array = np.zeros(duration, dtype=int)
     array[start_time] = start_time
-    print(array)
+    # print(array)
     return array
-    
+
+def expand_note_pitch(note_pitch):
+    return [x*2 for x in note_pitch]
+
 sys.path.append('..')
 
 # fn = os.path.join('/home/pi/Documents/LED-strip', 'silent_night_both.musicxml') # change directory according to musicXML file location
-fn = os.path.join('/home/pi/Documents/LED-strip', 'twinkle_twinkle_little_star_2.musicxml')
+fn = os.path.join('/home/pi/Documents/LED-strip', 'twinkle_twinkle_little_star_3.musicxml')
 fn_out = os.path.join('/home/pi/Documents/LED-strip', 'LED_output.csv')
 
 with open(fn, 'r') as stream:
@@ -123,10 +126,12 @@ df_left = pd.DataFrame(xml_list_left, columns=['Start', 'End', 'Pitch', 'Velocit
 
 # df.to_csv(fn_out, sep=';', quoting=2, float_format='%.3f')
 start_time_right, end_time_right, note_pitch_right = params(df_right)
-print(start_time_right, end_time_right, note_pitch_right)
+note_pitch_right = expand_note_pitch(note_pitch_right - SHIFTING_FACTOR)
 start_time_left, end_time_left, note_pitch_left = params(df_left)
-print(start_time_left, end_time_left, note_pitch_left)
+note_pitch_left = expand_note_pitch(note_pitch_left - SHIFTING_FACTOR)
+print(note_pitch_right, note_pitch_left)
 
+# with regards to timing
 duration = start_time_right[-1] + end_time_right[-1] # both right and left should be the same
 right_array = fill_array_with_zero(start_time_right, duration)
 left_array = fill_array_with_zero(start_time_left, duration)
@@ -155,7 +160,7 @@ if __name__ == '__main__':
             
             while i < duration:
                 if(right_array[i] == i):
-                    print(duration_right, i)
+                    print(note_pitch_right[index_right], i)
                     if(duration_right == i):
                         strip.setPixelColor(int(note_pitch_right[index_right-1]), 0) # remove LED of previous note
                         
@@ -163,15 +168,13 @@ if __name__ == '__main__':
                     strip.show()
                     
                     check_for_repeated_note(note_pitch_right, end_time_right, index_right)
-                    end_time_right = check_for_rest_note(note_pitch_right, start_time_right, end_time_right, index_right) # needs refinement
+                    end_time_right = check_for_rest_note(note_pitch_right, start_time_right, end_time_right, index_right)
                     
                     duration_right += end_time_right[index_right]
-                    
-                    # print(index_right)
                     index_right += 1
                     
                 if(left_array[i] == i):
-                    # print(duration_left, i)
+                    print(note_pitch_left[index_left], i)
                     if(duration_left == i):
                         strip.setPixelColor(int(note_pitch_left[index_left-1]), 0)
                         
