@@ -25,6 +25,33 @@ def number_to_freq(num):
 def note_name(num):
     return NOTE_NAMES[num % 12] + str(num/12 - 1)
 
+def fft(x):
+    X = list()
+    N = len(x)
+    for k in list(range(0, N)):
+        window = 1 # np.sin(np.pi * (k+0.5)/N)**2
+        X.append(np.complex(x[k] * window, 0))
+    
+    fft_rec(X)
+    return X
+
+def fft_rec(X):
+    N = len(X)
+    
+    if N <= 1:
+        return
+
+    even = np.array(X[0:N:2])
+    odd = np.array(X[1:N:2])
+
+    fft_rec(even)
+    fft_rec(odd)
+    
+    for k in list(range(0, int(N/2))):
+        t = np.exp(np.complex(0, -2 * np.pi * k / N)) * odd[k]
+        X[k] = even[k] + t
+        X[int(N/2) + k] = even[k] - t
+
 # LED strip configuration:
 LED_COUNT      = 60      # Number of LED pixels.
 LED_PIN        = 18      # GPIO pin connected to the pixels (18 uses PWM!).
@@ -34,7 +61,7 @@ LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 OCTAVE = 12
-SHIFTING_FACTOR = 2*OCTAVE      # Scaling factor to shift the notes within the LED strip length
+SHIFTING_FACTOR = 6*OCTAVE      # Scaling factor to shift the notes within the LED strip length
 
 def colorWipe(strip, color, wait_ms=50):
     """Wipe color across display a pixel at a time."""
@@ -95,6 +122,10 @@ if __name__ == '__main__':
             # compute FFT
             fft_data = (np.abs(np.fft.fft(data))[0:int(np.floor(FRAME_SIZE/2))])/FRAME_SIZE
             fft_data[1:] = 2*fft_data[1:]
+            
+            # # using the Cooley-Tukey algorithm 
+            # fft_data = (np.abs(fft(data))[0:int(np.floor(FRAME_SIZE/2))])/FRAME_SIZE
+            # fft_data[1:] = 2*fft_data[1:]
         
             # calculate and subtract average spectral noise
             if ii<noise_len:
@@ -114,7 +145,7 @@ if __name__ == '__main__':
             peak_data = 1.0*fft_data
             max_loc = np.argmax(peak_data[low_freq_loc:])
             freq_number = freq_to_number(max_loc)
-            n = int(round(freq_number)) - SHIFTING_FACTOR
+            n = int(round(freq_number))*2 - SHIFTING_FACTOR # adjusted to 144LED/m requirement
             print(note_name(n), n)
             
             if n != n_prev:
@@ -124,8 +155,6 @@ if __name__ == '__main__':
                 strip.setPixelColor(n_prev, Color(0,0,0))
                 strip.show()
                 n_prev = n
-            
-            time.sleep(0.001)
             
     except KeyboardInterrupt:
         if args.clear:
