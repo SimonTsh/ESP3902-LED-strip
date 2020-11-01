@@ -9,8 +9,8 @@ import argparse
 # Microphone configuration:
 form_1 = pyaudio.paInt16 # 16-bit resolution
 chans = 1 # 1 channel
-FSAMP = 44100 # 44.1kHz sampling rate
-FRAME_SIZE = 44100 # samples for buffer/samples per frame (more samples = better freq resolution)
+FSAMP = 44100 # 44.1kHz OR 48kHz sampling rate to prevent aliasing; reduce latency mono vs stereo -> half it e.g. 22kHz?
+FRAME_SIZE = 16384 # 2^N samples e.g. 8192, 16384, 44.1k OR 48k samples for buffer/samples per frame (more samples = better freq resolution) -> e.g. can reduce resolution as well
 dev_index = 0 # device index found by p.get_device_info_by_index(ii)
 
 audio = pyaudio.PyAudio() # create pyaudio instantiation
@@ -25,6 +25,7 @@ def number_to_freq(num):
 def note_name(num):
     return NOTE_NAMES[num % 12] + str(num/12 - 1)
 
+# used for Cooley-Tukey algorithm 
 def fft(x):
     X = list()
     N = len(x)
@@ -61,7 +62,7 @@ LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 OCTAVE = 12
-SHIFTING_FACTOR = 6*OCTAVE      # Scaling factor to shift the notes within the LED strip length
+SHIFTING_FACTOR = 4*OCTAVE      # Scaling factor to shift the notes within the LED strip length
 
 def colorWipe(strip, color, wait_ms=50):
     """Wipe color across display a pixel at a time."""
@@ -113,9 +114,9 @@ if __name__ == '__main__':
         while True:
             # read stream and convert data from bits to Pascals
             stream.start_stream()
-            data = np.fromstring(stream.read(FRAME_SIZE),dtype=np.int16)
-            if ii==noise_len:
-                data = data-noise_amp
+            data = np.fromstring(stream.read(FRAME_SIZE),dtype=np.int32) # change int16 to int32
+            #if ii==noise_len:
+            #    data = data-noise_amp
             data = ((data/np.power(2.0,15))*5.25)*(mic_sens_corr)
             stream.stop_stream()
         
