@@ -24,6 +24,8 @@ class SoundRecorder:
         self.secToRecord=.05
         self.threadsDieNow=False
         self.newAudio=False
+        self.dev_index=0
+        self.chans=1
         
     def setup(self):
         self.buffersToRecord=int(self.RATE*self.secToRecord/self.BUFFERSIZE)
@@ -32,7 +34,10 @@ class SoundRecorder:
         self.chunksToRecord=int(self.samplesToRecord/self.BUFFERSIZE)
         self.secPerPoint=1.0/self.RATE
         self.p = pyaudio.PyAudio()
-        self.inStream = self.p.open(format=pyaudio.paInt16,channels=1,rate=self.RATE,input=True,frames_per_buffer=self.BUFFERSIZE)
+        # for x in range(0,self.p.get_device_count()):
+            # print(self.p.get_device_info_by_index(x)) # used to check for mic input
+        self.inStream = self.p.open(format=pyaudio.paInt16,rate=self.RATE,channels=self.chans,\
+        input_device_index=self.dev_index,input=True,frames_per_buffer=self.BUFFERSIZE)
         self.xsBuffer=numpy.arange(self.BUFFERSIZE)*self.secPerPoint
         self.xs=numpy.arange(self.chunksToRecord*self.BUFFERSIZE)*self.secPerPoint
         self.audio=numpy.empty((self.chunksToRecord*self.BUFFERSIZE),dtype=numpy.int16)               
@@ -186,11 +191,11 @@ if __name__ == '__main__':
         frequencies = numpy.array(sorted(tunerNotes.keys()))
         
         # Misc variables for program controls
-        inputnote = 1                               # the y value on the plot
-        oldposition = (0,0)                         # memory of the last position
-        shownotes = True                            # note names shown or invisible
-        signal_level=0                              # volume level
-        fill = True                                 #
+        inputnote = 1            # the y value on the plot
+        oldposition = (0,0)        # memory of the last position
+        shownotes = True         # note names shown or invisible
+        signal_level=0      # volume level
+        fill = True     
         trys = 1
         needle = False
         cls = True
@@ -200,10 +205,10 @@ if __name__ == '__main__':
         auto_scale = False
         toggle = False
         stepchange = False
-        soundgate = 19                             # zero is loudest possible input level
+        soundgate = 19          # zero is loudest possible input level
         targetnote = 0
         targetnote_prev = 0
-        SR=SoundRecorder()                          # recording device (usb mic)
+        SR=SoundRecorder()      # recording device (usb mic)
         
  
         while True:
@@ -221,18 +226,18 @@ if __name__ == '__main__':
                 
             SR.close()
             
-            if inputnote > frequencies[len(tunerNotes)-1]:                        #### not interested in notes above the notes list
+            if inputnote > frequencies[len(tunerNotes)-1]:     #### not interested in notes above the notes list
                 continue
                 
-            if inputnote < frequencies[0]:                                     #### not interested in notes below the notes list
+            if inputnote < frequencies[0]:        #### not interested in notes below the notes list
                 continue    
                     
-            if signal_level > soundgate:                                        #### basic noise gate to stop it guessing ambient noises 
+            if signal_level > soundgate:          #### basic noise gate to stop it guessing ambient noises 
                 continue
             
             
             targetnote = closest_value_index(frequencies, round(inputnote, 2))      #### find the closest note in the keyed array
-            targetnote = targetnote*2 - SHIFTING_FACTOR
+            targetnote = int(targetnote)*2 - SHIFTING_FACTOR
             print(targetnote)
                         
             if targetnote != targetnote_prev:
