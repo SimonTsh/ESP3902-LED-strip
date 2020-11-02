@@ -1,14 +1,11 @@
 import sys
-import random
 import math
-import os
+
 import pyaudio
 from scipy import signal
-from socket import *
-from random import *
-from scipy.signal import blackmanharris, fftconvolve 
+from scipy.signal import fftconvolve 
 import numpy
-from numpy import argmax, sqrt, mean, diff, log
+from numpy import argmax, diff
 from matplotlib.mlab import find
 import time
 
@@ -190,30 +187,16 @@ if __name__ == '__main__':
         # Sort the keys and turn into a numpy array for logical indexing
         frequencies = numpy.array(sorted(tunerNotes.keys()))
         
-        # Misc variables for program controls
+        # Misc variables for mic configuration
         inputnote = 1            # the y value on the plot
-        oldposition = (0,0)        # memory of the last position
-        shownotes = True         # note names shown or invisible
         signal_level=0      # volume level
-        fill = True     
-        trys = 1
-        needle = False
-        cls = True
-        col = False
-        circ = False
-        line = False
-        auto_scale = False
-        toggle = False
-        stepchange = False
         soundgate = 19          # zero is loudest possible input level
         targetnote = 0
         targetnote_prev = 0
         SR=SoundRecorder()      # recording device (usb mic)
-        
  
         while True:
             #### Main screen trace loop ####
-            
             SR.setup()
             raw_data_signal = SR.getAudio()                                         #### raw_data_signal is the input signal data 
             signal_level = round(abs(loudness(raw_data_signal)),2)                  #### find the volume from the audio sample
@@ -234,7 +217,6 @@ if __name__ == '__main__':
                     
             if signal_level > soundgate:          #### basic noise gate to stop it guessing ambient noises 
                 continue
-            
             
             targetnote = closest_value_index(frequencies, round(inputnote, 2))      #### find the closest note in the keyed array
             targetnote = int(targetnote)*2 - SHIFTING_FACTOR
