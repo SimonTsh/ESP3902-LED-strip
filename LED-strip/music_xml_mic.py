@@ -33,7 +33,7 @@ soundgate = 19          # zero is loudest possible input level
 targetnote = 0
 targetnote_prev = 0
 
-# c.r. http://www.swharden.com/blog/2013-05-09-realtime-fft-audio-visualization-with-python/
+# Refer to http://www.swharden.com/blog/2013-05-09-realtime-fft-audio-visualization-with-python/
 class SoundRecorder:
         
     def __init__(self):
@@ -68,13 +68,11 @@ class SoundRecorder:
         self.newAudio=True
         return np.fromstring(audioString,dtype=np.int16)
         
-# c.r. https://github.com/endolith/waveform-analyzer/blob/master/frequency_estimator.py
 def parabolic(f, x): 
     xv = 1/2. * (f[x-1] - f[x+1]) / (f[x-1] - 2 * f[x] + f[x+1]) + x
     yv = f[x] - 1/4. * (f[x-1] - f[x+1]) * (xv - x)
     return (xv, yv)
     
-# c.r. https://github.com/endolith/waveform-analyzer/blob/master/frequency_estimator.py
 def freq_from_autocorr(raw_data_signal, fs):                          
     corr = fftconvolve(raw_data_signal, raw_data_signal[::-1], mode='full')
     corr = corr[int(len(corr)/2):]
@@ -291,7 +289,7 @@ if __name__ == '__main__':
                     continue
                             
                 targetnote = closest_value_index(frequencies, round(inputnote, 2))      #### find the closest note in the keyed array
-                targetnote = int(targetnote)*2 - SHIFTING_FACTOR
+                targetnote = int(targetnote)*2 - 4*OCTAVE
                 print(targetnote)
                 
                 #turn off previous note's LED
