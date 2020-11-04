@@ -178,7 +178,7 @@ if __name__ == '__main__':
                     if(duration_left == i):
                         strip.setPixelColor(int(note_pitch_left[index_left-1]), 0)
                         
-                    strip.setPixelColor(int(note_pitch_left[index_left]), Color(0,0,255))
+                    strip.setPixelColor(int(note_pitch_left[index_left]), Color(255,69,0))
                     strip.show()
                     
                     check_for_repeated_note(note_pitch_left, end_time_left, index_left)
