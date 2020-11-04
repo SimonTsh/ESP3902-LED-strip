@@ -12,7 +12,7 @@ import time
 from rpi_ws281x import *
 import argparse
 
-# See http://www.swharden.com/blog/2013-05-09-realtime-fft-audio-visualization-with-python/
+# Refer to http://www.swharden.com/blog/2013-05-09-realtime-fft-audio-visualization-with-python/
 class SoundRecorder:
         
     def __init__(self):
@@ -47,13 +47,11 @@ class SoundRecorder:
         self.newAudio=True
         return numpy.fromstring(audioString,dtype=numpy.int16)
         
-# See https://github.com/endolith/waveform-analyzer/blob/master/frequency_estimator.py
 def parabolic(f, x): 
     xv = 1/2. * (f[x-1] - f[x+1]) / (f[x-1] - 2 * f[x] + f[x+1]) + x
     yv = f[x] - 1/4. * (f[x-1] - f[x+1]) * (xv - x)
     return (xv, yv)
     
-# See https://github.com/endolith/waveform-analyzer/blob/master/frequency_estimator.py
 def freq_from_autocorr(raw_data_signal, fs):                          
     corr = fftconvolve(raw_data_signal, raw_data_signal[::-1], mode='full')
     corr = corr[int(len(corr)/2):]
@@ -169,7 +167,7 @@ if __name__ == '__main__':
     LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
     LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
     OCTAVE = 12
-    SHIFTING_FACTOR = 4*OCTAVE      # Scaling factor to shift the notes within the LED strip length
+    SHIFTING_FACTOR = 2*OCTAVE      # Scaling factor to shift the notes within the LED strip length
     
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
@@ -203,7 +201,7 @@ if __name__ == '__main__':
             
             try: 
                 inputnote = round(freq_from_autocorr(raw_data_signal,SR.RATE),2)    #### find the freq from the audio sample
-                
+                print(inputnote)
             except:
                 inputnote == 0
                 
@@ -220,7 +218,7 @@ if __name__ == '__main__':
             
             targetnote = closest_value_index(frequencies, round(inputnote, 2))      #### find the closest note in the keyed array
             targetnote = int(targetnote)*2 - SHIFTING_FACTOR
-            print(targetnote)
+            # print(targetnote)
                         
             if targetnote != targetnote_prev:
                 strip.setPixelColor(targetnote, Color(0,0,255))
