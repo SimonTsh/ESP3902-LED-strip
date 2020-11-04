@@ -24,7 +24,7 @@ LED_CHANNEL    = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 OCTAVE = 12
 SHIFTING_FACTOR = 2*OCTAVE  # Scaling factor to shift the notes within the LED strip length
 SPEED_FACTOR = 1         # To adjust the speed of the music according to the score
-BEAT = 0.5 # running the loop in intervals of 1s
+BEAT = 0.5 # running the loop in intervals of 0.5s
 
 def colorWipe(strip, color, wait_ms=50):
     """Wipe color across display a pixel at a time."""
@@ -77,28 +77,6 @@ def params(df):
    
     return start_time, end_time, note_pitch
 
-def check_for_repeated_note(note_pitch, end_time, i):
-    # check for repeated notes
-    if ((note_pitch[i] == note_pitch[i-1]) and i != 0):
-        strip.setPixelColor(int(note_pitch[i]), Color(0,255,255)) # change color for repeated notes
-        strip.show()
-    return i+1
-
-def check_for_rest_note(note_pitch, start_time, end_time, i):
-    # check if need to wait for rest
-    if i != (len(note_pitch)-1):
-        if (start_time[i] + end_time[i] < start_time[i+1]):
-            #print(note_pitch[i])
-            #time.sleep(((start_time[i+1] - start_time[i]) - end_time[i+1])/1000.0 * 500) # temporary measure
-            #strip.setPixelColor(int(note_pitch[i]), 0)
-            #strip.show()
-            #end_time[i] = start_time[i+1] - start_time[i]
-            #return end_time
-            return i+1
-            
-    #return end_time
-    return i
-
 def fill_array_with_zero(start_time, duration):
     array = np.zeros(duration, dtype=int)
     array[start_time] = start_time
@@ -107,6 +85,10 @@ def fill_array_with_zero(start_time, duration):
     
 def expand_note_pitch(note_pitch):
     return [x*2 for x in note_pitch]
+
+def pause(wait_ms):
+    time.sleep(wait_ms/1000.0)
+
 
 sys.path.append('..')
 
@@ -155,9 +137,6 @@ note_number = 0
 duration_right, duration_left = 0, 0
 pressed_right, pressed_left = False, False
 
-# main idea would be to check whether the note pitch is correct -> wait for counter to turn a value instead of 0
-# before changing LED to the next colour OR append 0s to fill up array with the same duration as required
-
 # Main program logic for LED:
 if __name__ == '__main__':
     # Process arguments
@@ -180,41 +159,23 @@ if __name__ == '__main__':
     try:
         while True:            
 
-            strip.setPixelColor(int(note_pitch_right[index_right-1]), 0) # remove LED of previous note
-                        
-            strip.setPixelColor(int(note_pitch_right[index_right]), Color(0,0,255))
-            strip.show()
-                    
-            #index_right = check_for_repeated_note(note_pitch_right, end_time_right, index_right)
-            #index_right = check_for_rest_note(note_pitch_right, start_time_right, end_time_right, index_right)
-                    
-            #duration_right += end_time_right[index_right]
-            #    index_right += 1
-                    
-            #    if(left_array[i] == i):
-                    # print(note_pitch_left[index_left], i)
-            #        if(duration_left == i):
-            
-            strip.setPixelColor(int(note_pitch_left[index_left-1]), 0)
-                        
-            strip.setPixelColor(int(note_pitch_left[index_left]), Color(0,0,255))
-            strip.show()
-                    
-            #index_left = check_for_repeated_note(note_pitch_left, end_time_left, index_left)
-            #index_left = check_for_rest_note(note_pitch_left, start_time_left, end_time_left, index_left) # needs refinement
-                    
-            #duration_left += end_time_left[index_left]
-            #     index_left += 1
-                    
-                # strip.setPixelColor(int(note_pitch[i]), Color(0,0,255))
-                # strip.show()
-                # # print(note_pitch[i])
+            #strip.setPixelColor(int(note_pitch_right[index_right-1]), 0) # remove LED of previous note
+            if(note_pitch_right[index_right] == note_pitch_right[index_right-1]):
+                strip.setPixelColor(int(note_pitch_right[index_right]), Color(0,255,255))
+                strip.show()
+                #pause(50)
+            else:
+                strip.setPixelColor(int(note_pitch_right[index_right]), Color(0,0,255))
+                strip.show()
 
-                # #check if need to wait for rest
-                # if i != (len(note_pitch)-1):
-                    # if (start_time[i] + end_time[i] < start_time[i+1]):
-                        # # print(note_pitch[i])
-                        # time.sleep(((start_time[i+1] - start_time[i]) - end_time[i+1])/1000.0 * 500)
+            #strip.setPixelColor(int(note_pitch_left[index_left-1]), 0)
+            if(note_pitch_left[index_left] == note_pitch_left[index_left-1]):
+                strip.setPixelColor(int(note_pitch_left[index_left]), Color(255,255,0))
+                strip.show()
+                #pause(50)
+            else:
+                strip.setPixelColor(int(note_pitch_left[index_left]), Color(255,69,0))
+                strip.show()
 
                 #check for any keyboard input
             if input_device.poll():
@@ -243,14 +204,12 @@ if __name__ == '__main__':
                     index_left += 1
                 i += 1
 
-                   # #check for repeated note by lighting with another colour
-                    # if (note_pitch[i] == note_pitch[i-1]):
-                        # strip.setPixelColor(int(note_pitch[i]), Color(0,255,255))
-                        # strip.show()
-                    
-                #if (pressed_left and pressed_right):
-                #    i += 1
+            if (i == duration):
+                i = 0
+                index_right, index_left = 0, 0
+
 
     except KeyboardInterrupt:
         if args.clear:
             colorWipe(strip, Color(0,0,0), 10)
+
