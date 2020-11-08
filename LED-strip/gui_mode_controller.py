@@ -258,6 +258,6 @@ else:
                          index_right, index_left = 0, 0
                
                elif (event == 'Mode 3'):
-                    exec(open('music_xml_mic.py').read())
+                    exec(open('mode_3_mic.py').read())
 
      window2.close()
